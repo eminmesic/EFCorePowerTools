@@ -153,6 +153,11 @@ namespace RevEng.Core
                     continue;
                 }
 
+                if(line.StartsWith("#nullable disable"))
+                {
+                    finalSource.Add("");
+                }
+
                 prevLine = line.Trim();
 
                 finalSource.Add(line);
@@ -162,7 +167,7 @@ namespace RevEng.Core
 
             usings.Sort();
 
-            finalSource.InsertRange(1, usings);
+            finalSource.InsertRange(9, usings);
             return finalSource;
         }
     }

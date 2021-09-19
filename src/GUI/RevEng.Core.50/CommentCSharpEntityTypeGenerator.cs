@@ -127,7 +127,10 @@ namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal
                 GenerateEntityTypeDataAnnotations(entityType);
             }
 
-            _sb.AppendLine($"public partial class {entityType.Name}");
+            if (!ApplyIntefacesIfExists(ref entityType))
+            {
+                _sb.AppendLine($"public partial class {entityType.Name}");
+            }
 
             _sb.AppendLine("{");
 
@@ -143,6 +146,33 @@ namespace Microsoft.EntityFrameworkCore.Scaffolding.Internal
             }
 
             _sb.AppendLine("}");
+        }
+
+        protected bool ApplyIntefacesIfExists(ref IEntityType entityType)
+        {
+            bool HasReadOnlyAudit = entityType.FindProperties(new List<string>() { "CreatedBy", "CreatedAt" })?.Any() ?? false;
+            bool HasAudit = entityType.FindProperties(new List<string>() { "CreatedBy", "CreatedAt", "ModifiedBy", "ModifiedAt" })?.Any() ?? false;
+            bool HasSystemVersioning = entityType.FindProperties(new List<string>() { "SysStartTime", "SysEndTime" })?.Any() ?? false;
+
+            if (HasReadOnlyAudit || HasAudit || HasSystemVersioning)
+            {
+                var interfaceStructure = new List<string>();
+                if (HasReadOnlyAudit && !HasAudit)
+                {
+                    interfaceStructure.Add("IReadOnlyAudit");
+                }
+                if (HasReadOnlyAudit && HasAudit)
+                {
+                    interfaceStructure.Add("IAudit");
+                }
+                if (HasSystemVersioning)
+                {
+                    interfaceStructure.Add("ISystemVersioning");
+                }
+                _sb.AppendLine($"public partial class {entityType.Name} : {string.Join(", ", interfaceStructure)}");
+                return true;
+            }
+            return false;
         }
 
         /// <summary>

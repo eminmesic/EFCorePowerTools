@@ -46,19 +46,46 @@ namespace RevEng.Core
 
             foreach (var databaseTable in databaseTables)
             {
-                var columns = new List<ColumnModel>();
+                    var columns = new List<ColumnModel>();
 
-                var primaryKeyColumnNames = databaseTable.PrimaryKey?.Columns.Select(c => c.Name).ToHashSet();
-                var foreignKeyColumnNames = databaseTable.ForeignKeys?.SelectMany(c => c.Columns).Select(c => c.Name).ToHashSet();
-                columns.AddRange(from colum in databaseTable.Columns.Where(c => !string.IsNullOrWhiteSpace(c.Name))
-                                 select new ColumnModel(
-                                     colum.Name,
-                                     primaryKeyColumnNames?.Contains(colum.Name) ?? false,
-                                     foreignKeyColumnNames?.Contains(colum.Name) ?? false));
+                    var primaryKeyColumnNames = databaseTable.PrimaryKey?.Columns.Select(c => c.Name).ToHashSet();
+                    var foreignKeyColumnNames = databaseTable.ForeignKeys?.SelectMany(c => c.Columns).Select(c => c.Name).ToHashSet();
+                    columns.AddRange(from colum in databaseTable.Columns.Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                                     select new ColumnModel(
+                                         colum.Name,
+                                         primaryKeyColumnNames?.Contains(colum.Name) ?? false,
+                                         foreignKeyColumnNames?.Contains(colum.Name) ?? false));
                 buildResult.Add(new TableModel(databaseTable.Name, databaseTable.Schema, databaseType, databaseTable is DatabaseView ? ObjectType.View : ObjectType.Table, columns));
             }
 
             return buildResult;
+        }
+
+        public List<TableModel> GetViews()
+        {
+            var result = new List<TableModel>();
+
+            if (databaseType != DatabaseType.SQLServer)
+            {
+                return result;
+            }
+
+            var viewModelFactory = serviceProvider.GetService<IViewModelFactory>();
+
+            var viewModelOptions = new ModuleModelFactoryOptions
+            {
+                FullModel = false,
+                Modules = new List<string>(),
+            };
+
+            var viewModel = viewModelFactory.Create(connectionString, viewModelOptions);
+
+            foreach (var procedure in viewModel.Routines)
+            {
+                result.Add(new TableModel(procedure.Name, procedure.Schema, databaseType, ObjectType.View, null));
+            }
+
+            return result.OrderBy(c => c.DisplayName).ToList();
         }
 
         public List<TableModel> GetProcedures()

@@ -121,6 +121,8 @@ namespace RevEng.Core.Modules
 
         public string FileNameSuffix { get; set; }
 
+        private readonly bool _isFileScopedNamespace = true;
+
         public SavedModelFiles Save(ScaffoldedModel scaffoldedModel, string outputDir, string nameSpaceValue, bool useAsyncCalls)
         {
             if (scaffoldedModel == null)
@@ -320,15 +322,26 @@ namespace RevEng.Core.Modules
                 Sb.AppendLine();
             }
 
-            Sb.AppendLine($"namespace {@namespace}");
-            Sb.AppendLine("{");
+            Sb.AppendLine($"namespace {@namespace}{(_isFileScopedNamespace ? ";" + Environment.NewLine : string.Empty)}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("{");
+            }
 
             using (Sb.Indent())
             {
+                if (_isFileScopedNamespace)
+                {
+                    Sb.DecrementIndent();
+                }
+
                 GenerateClass(resultElements, name, options.NullableReferences);
             }
 
-            Sb.AppendLine("}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("}");
+            }
 
             return Sb.ToString();
         }

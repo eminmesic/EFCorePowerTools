@@ -40,7 +40,19 @@ namespace RevEng.Core
 
             serviceCollection
                 .AddEntityFrameworkDesignTimeServices()
-#if CORE60
+#if CORE50
+                .AddSingleton<ICSharpEntityTypeGenerator>(provider =>
+                 new CommentCSharpEntityTypeGenerator(
+                    provider.GetService<IAnnotationCodeGenerator>(),
+                    provider.GetService<ICSharpHelper>(),
+                    options.UseNullableReferences,
+                    options.UseNoConstructor))
+#elif CORE60
+                .AddSingleton<ICSharpEntityTypeGenerator>(provider =>
+                 new CSharpEntityTypeGeneratorExtended(
+                    provider.GetService<IAnnotationCodeGenerator>(),
+                    provider.GetService<ICSharpHelper>(),
+                    options.UseNoConstructor))
 #else
                 .AddSingleton<ICSharpEntityTypeGenerator>(provider =>
                  new CommentCSharpEntityTypeGenerator(

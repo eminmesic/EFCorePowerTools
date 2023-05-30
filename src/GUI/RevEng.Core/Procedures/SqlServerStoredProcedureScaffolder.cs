@@ -21,6 +21,7 @@ namespace RevEng.Core.Procedures
     public class SqlServerStoredProcedureScaffolder : SqlServerRoutineScaffolder, IProcedureScaffolder
     {
         private const string ParameterPrefix = "parameter";
+        private readonly bool _isFileScopedNamespace = true;
 
         public SqlServerStoredProcedureScaffolder([NotNull] ICSharpHelper code)
             : base(code)
@@ -35,12 +36,12 @@ namespace RevEng.Core.Procedures
                 throw new ArgumentNullException(nameof(scaffoldedModel));
             }
 
-            var files = base.Save(scaffoldedModel, outputDir, nameSpaceValue, useAsyncCalls);
+            var files = base.Save(scaffoldedModel, Path.Combine(outputDir, "..\\Stored Procedures"), nameSpaceValue, useAsyncCalls);
 
             var contextDir = Path.GetDirectoryName(Path.Combine(outputDir, scaffoldedModel.ContextFile.Path));
             var dbContextExtensionsText = GetDbContextExtensionsText(useAsyncCalls);
             var dbContextExtensionsName = useAsyncCalls ? "DbContextExtensions.cs" : "DbContextExtensions.Sync.cs";
-            var dbContextExtensionsPath = Path.Combine(contextDir, dbContextExtensionsName);
+            var dbContextExtensionsPath = Path.Combine(contextDir, "..\\..\\Extensions", dbContextExtensionsName);
             File.WriteAllText(dbContextExtensionsPath, dbContextExtensionsText.Replace("#NAMESPACE#", nameSpaceValue, StringComparison.OrdinalIgnoreCase), Encoding.UTF8);
             files.AdditionalFiles.Add(dbContextExtensionsPath);
 
@@ -71,11 +72,19 @@ namespace RevEng.Core.Procedures
             }
 
             Sb.AppendLine();
-            Sb.AppendLine($"namespace {scaffolderOptions.ContextNamespace}");
-            Sb.AppendLine("{");
+            Sb.AppendLine($"namespace {scaffolderOptions.ContextNamespace}{(_isFileScopedNamespace ? ";" : string.Empty)}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("{");
+            }
 
             using (Sb.Indent())
             {
+                if (_isFileScopedNamespace)
+                {
+                    Sb.DecrementIndent();
+                }
+
                 Sb.AppendLine($"public partial class {scaffolderOptions.ContextName}");
                 Sb.AppendLine("{");
                 using (Sb.Indent())
@@ -152,7 +161,10 @@ namespace RevEng.Core.Procedures
                 Sb.AppendLine("}");
             }
 
-            Sb.AppendLine("}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("}");
+            }
 
             return Sb.ToString();
         }
@@ -181,11 +193,19 @@ namespace RevEng.Core.Procedures
             }
 
             Sb.AppendLine();
-            Sb.AppendLine($"namespace {scaffolderOptions.ContextNamespace}");
-            Sb.AppendLine("{");
+            Sb.AppendLine($"namespace {scaffolderOptions.ContextNamespace}{(_isFileScopedNamespace ? ";" : string.Empty)}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("{");
+            }
 
             using (Sb.Indent())
             {
+                if (_isFileScopedNamespace)
+                {
+                    Sb.DecrementIndent();
+                }
+
                 Sb.AppendLine($"public partial interface I{scaffolderOptions.ContextName}Procedures");
                 Sb.AppendLine("{");
                 using (Sb.Indent())
@@ -200,7 +220,10 @@ namespace RevEng.Core.Procedures
                 Sb.AppendLine("}");
             }
 
-            Sb.AppendLine("}");
+            if (!_isFileScopedNamespace)
+            {
+                Sb.AppendLine("}");
+            }
 
             return Sb.ToString();
         }

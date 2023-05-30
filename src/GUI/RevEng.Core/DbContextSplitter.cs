@@ -85,6 +85,16 @@ namespace RevEng.Core
                 var entityParameterName = blockMatch.Groups["EntityParameterName"].Value;
                 var statements = configBlocks[index].Replace(new string(' ', 16), new string(' ', 12), StringComparison.OrdinalIgnoreCase);
 
+                // Temporary fix start
+                statements = statements.Replace(
+                    "entity.ToTable(tb => tb.IsTemporal(ttb =>\r\n    {\r\n        ttb.UseHistoryTable(",
+                    "entity.ToTable(tb => tb.IsTemporal(ttb =>\r\n            {\r\n                ttb.UseHistoryTable(");
+
+                statements = statements.Replace(
+                    "ttb\r\n            .HasPeriodStart(\"SysStartTime\")\r\n            .HasColumnName(\"SysStartTime\");\r\n        ttb\r\n            .HasPeriodEnd(\"SysEndTime\")\r\n            .HasColumnName(\"SysEndTime\");\r\n    }\r\n));",
+                    "        ttb\r\n                    .HasPeriodStart(\"SysStartTime\")\r\n                    .HasColumnName(\"SysStartTime\");\r\n                ttb\r\n                    .HasPeriodEnd(\"SysEndTime\")\r\n                    .HasColumnName(\"SysEndTime\");\r\n            }));");
+                // Temporary fix end
+
                 var sb = new StringBuilder();
                 sb.AppendLine(PathHelper.Header);
                 sb.AppendLine(string.Join(Environment.NewLine, contextUsingStatements));
@@ -197,7 +207,7 @@ namespace RevEng.Core
 
             usings.Sort();
 
-            finalSource.InsertRange(1, usings);
+            finalSource.InsertRange(9, usings);
             return finalSource;
         }
 

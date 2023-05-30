@@ -57,6 +57,10 @@ namespace EfReveng
                     }
 
                     var options = ReverseEngineerOptionsExtensions.TryDeserialize(File.ReadAllText(args[0], System.Text.Encoding.UTF8));
+                    options.DatabaseType = DatabaseType.SQLServer;
+                    options.ProjectPath = @"C:\Repos\Hidaya\backend\src\Platform.EntityFramework";
+                    //options.Dacpac = @"C:\Repos\Hidaya\database\src\bin\Debug\Hidaya.Database.dacpac";
+                    options.ConnectionString = "Data Source=.;Initial Catalog=NewHidayaDb;Integrated Security=True;";
 
                     if (options == null)
                     {

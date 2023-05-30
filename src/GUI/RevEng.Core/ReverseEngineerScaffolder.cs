@@ -202,6 +202,10 @@ namespace RevEng.Core
                 };
 
                 var procedureModel = procedureModelFactory.Create(options.Dacpac ?? options.ConnectionString, procedureModelFactoryOptions);
+                for (int i = 0; i < procedureModel.Routines.Count; i++)
+                {
+                    procedureModel.Routines[i].NewName = procedureModel.Routines[i].Name.Replace("usp_", string.Empty);
+                }
 
                 ApplyRenamers(procedureModel.Routines, options.CustomReplacers);
 
